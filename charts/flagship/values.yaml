@@ -1,0 +1,26 @@
+global:
+  project: ""
+  argocd:
+    namespace: argocd
+    targetRevision: main
+    syncPolicy: {}
+
+namespace: ""
+
+project: ""
+
+syncPolicy: {}
+
+clusterResources:
+  syncWave: -3
+  namespaces: []
+
+argocd:
+  enabled: true
+  repoURL: 'https://argoproj.github.io/argo-helm'
+  chart: argo-cd
+  targetRevision: 5.*
+  syncWave: -1
+  values: {}
+
+

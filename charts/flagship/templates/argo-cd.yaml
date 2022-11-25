@@ -1,0 +1,34 @@
+{{- if .Values.argocd.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-argo-cd
+  namespace: {{ include "flagship.namespace" . }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.argocd.syncWave | quote }}
+spec:
+  project: {{ .Values.project | default .Values.global.project | default "default" }}
+  source:
+    chart: {{ .Values.argocd.chart }}
+    repoURL: {{ .Values.argocd.repoURL }}
+    targetRevision: {{ .Values.argocd.targetRevision }}
+    helm:
+      releaseName: {{ .Release.Name }}-argo-cd
+      valueFiles:
+        - values.yaml
+      values: |
+        global:
+        {{- toYaml .Values.global | nindent 10 }}
+{{- with .Values.argocd.values }}
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+  destination:
+    namespace: {{ include "flagship.namespace" . }}
+    server: 'https://kubernetes.default.svc'
+  syncPolicy:
+  {{- with .Values.syncPolicy | default .Values.global.argocd.syncPolicy }}
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
