@@ -1,0 +1,34 @@
+global:
+  project: ""
+  argocd:
+    namespace: argocd
+    targetRevision: main
+    syncPolicy: {}
+
+namespace: ""
+
+project: ""
+
+flagship:
+  enabled: true
+  repoURL: git@github.com:hungrysushi/nautilus_charts.git
+  path: charts/flagship
+  targetRevision: ""
+  syncPolicy: {}
+  values: {}
+
+fleet:
+  enabled: true
+  repoURL: git@github.com:hungrysushi/nautilus_charts.git
+  path: charts/fleet
+  targetRevision: ""
+  syncPolicy: {}
+  values: {}
+
+flotilla:
+  enabled: false
+  repoURL: git@github.com:hungrysushi/nautilus_charts.git
+  path: charts/flotilla
+  targetRevision: ""
+  syncPolicy: {}
+  values: {}

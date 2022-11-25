@@ -1,0 +1,28 @@
+{{- if .Values.fleet.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-fleet
+  namespace: {{ include "shipyard.namespace" . }}
+spec:
+  project: {{ .Values.project | default .Values.global.project | default "default" }}
+  source:
+    repoURL: {{ .Values.fleet.repoURL }}
+    path: {{ .Values.fleet.path }}
+    targetRevision: {{ .Values.fleet.targetRevision | default .Values.global.argocd.targetRevision }}
+    helm:
+      releaseName: {{ .Release.Name }}-fleet
+      valueFiles:
+        - values.yaml
+      {{- with .Values.fleet.values }}
+      values: |
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+  destination:
+    namespace: {{ include "shipyard.namespace" . }}
+    server: 'https://kubernetes.default.svc'
+  syncPolicy:
+  {{- with .Values.fleet.syncPolicy | default .Values.global.argocd.syncPolicy }}
+    {{ toYaml . | nindent 4}}
+  {{- end }}
+{{- end }}

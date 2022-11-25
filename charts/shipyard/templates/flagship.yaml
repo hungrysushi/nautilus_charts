@@ -1,0 +1,28 @@
+{{- if .Values.flagship.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-flagship
+  namespace: {{ include "shipyard.namespace" . }}
+spec:
+  project: {{ .Values.project | default .Values.global.project | default "default" }}
+  source:
+    repoURL: {{ .Values.flagship.repoURL }}
+    path: {{ .Values.flagship.path }}
+    targetRevision: {{ .Values.flagship.targetRevision | default .Values.global.argocd.targetRevision }}
+    helm:
+      releaseName: {{ .Release.Name }}-flagship
+      valueFiles:
+        - values.yaml
+      {{- with .Values.flagship.values }}
+      values: |
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+  destination:
+    namespace: {{ include "shipyard.namespace" . }}
+    server: 'https://kubernetes.default.svc'
+  syncPolicy:
+  {{- with .Values.flagship.syncPolicy | default .Values.global.argocd.syncPolicy }}
+    {{ toYaml . | nindent 4}}
+  {{- end }}
+{{- end }}
