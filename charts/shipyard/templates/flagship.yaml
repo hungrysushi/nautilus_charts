@@ -14,8 +14,9 @@ spec:
       releaseName: {{ .Release.Name }}-flagship
       valueFiles:
         - values.yaml
-      {{- with .Values.flagship.values }}
       values: |
+        global: {{ toYaml .Values.global | nindent 10 }}
+      {{- with .Values.flagship.values }}
         {{ toYaml . | nindent 8 }}
       {{- end }}
   destination:

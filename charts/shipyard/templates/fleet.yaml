@@ -14,8 +14,9 @@ spec:
       releaseName: {{ .Release.Name }}-fleet
       valueFiles:
         - values.yaml
-      {{- with .Values.fleet.values }}
       values: |
+        global: {{ toYaml .Values.global | nindent 10 }}
+      {{- with .Values.fleet.values }}
         {{ toYaml . | nindent 8 }}
       {{- end }}
   destination:
