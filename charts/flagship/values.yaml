@@ -20,7 +20,13 @@ argocd:
   repoURL: 'https://argoproj.github.io/argo-helm'
   chart: argo-cd
   targetRevision: 5.*
-  syncWave: -1
+  syncWave: -2
   values: {}
 
+istio:
+  enabled: true
+  syncWave: -1
 
+networking:
+  enabled: true
+  syncWave: 0

@@ -1,0 +1,24 @@
+{{- if .Values.networking.enabled }}
+{{- range $gateway := .Values.networking.gateways }}
+{{- range $route := $gateway.routes }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ $route.name }}
+  namespace: {{ $route.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $.Values.networking.syncWave | quote }}
+spec:
+  gateways:
+  - istio-system/{{ $gateway.name }}
+  hosts: {{- toYaml $route.hosts | nindent 4 }}
+  http:
+  - name: {{ $route.name }}-vs
+    route:
+    - destination:
+        host: {{ $route.destination.host }}
+        port:
+          number: {{ $route.destination.port }}
+{{- end }}
+{{- end }}
+{{- end }}

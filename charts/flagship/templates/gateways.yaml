@@ -1,0 +1,23 @@
+{{- if .Values.networking.enabled }}
+{{- range $gateway := .Values.networking.gateways }}
+{{- if $gateway.create }}
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: {{ $gateway.name }}
+  namespace: istio-system
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $.Values.networking.syncWave | quote }}
+spec:
+  selector:
+    istio: {{ $gateway.selector }}
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+{{- end }}
+{{- end }}
+{{- end }}
