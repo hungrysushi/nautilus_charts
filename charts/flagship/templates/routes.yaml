@@ -12,13 +12,12 @@ spec:
   gateways:
   - istio-system/{{ $gateway.name }}
   hosts: {{- toYaml $route.hosts | nindent 4 }}
-  http:
-  - name: {{ $route.name }}-vs
-    route:
-    - destination:
-        host: {{ $route.destination.host }}
-        port:
-          number: {{ $route.destination.port }}
+  {{- with $route.http }}
+  http: {{ toYaml . | nindent 4}}
+  {{- end }}
+  {{- with $route.tls }}
+  tls: {{ toYaml . | nindent 4}}
+  {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
