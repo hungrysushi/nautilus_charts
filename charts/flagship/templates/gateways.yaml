@@ -11,13 +11,10 @@ metadata:
 spec:
   selector:
     istio: {{ $gateway.selector }}
+  {{- with $gateway.servers }}
   servers:
-  - port:
-      number: 80
-      name: http
-      protocol: HTTP
-    hosts:
-    - "*"
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
 {{- end }}
 {{- end }}
 {{- end }}
