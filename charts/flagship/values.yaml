@@ -26,6 +26,18 @@ argocd:
 istio:
   enabled: true
   syncWave: -1
+  repoURL: 'https://istio-release.storage.googleapis.com/charts'
+  targetRevision: '1.16.*'
+  base:
+    namespace: istio-system
+    values: {}
+  istiod:
+    namespace: istio-system
+    values: {}
+  gateways: []
+# - name: ingressgateway
+#   namespace: istio-ingress
+#   values: {}
 
 networking:
   enabled: true
