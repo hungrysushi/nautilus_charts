@@ -72,7 +72,7 @@ Namespace to create ArgoCD apps
 Enable finalizer
 */}}
 {{- define "flagship.enableFinalizer" -}}
-{{- if (and (haskey .Values "enableFinalizer") .Values.enableFinializer -}}
+{{- if (and (hasKey .Values "enableFinalizer") .Values.enableFinializer) -}}
   true
 {{- else -}}
   {{- if .Values.global.enableFinalizer -}}
