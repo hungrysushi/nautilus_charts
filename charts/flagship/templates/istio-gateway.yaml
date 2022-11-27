@@ -5,7 +5,7 @@ kind: Application
 metadata:
   name: {{ $.Release.Name }}-istio-gateway-{{ $gateway.name }}
   namespace: {{ include "flagship.namespace" $ }}
-  {{- if (include "flagship.enableFinalizer" .) }}
+  {{- if (include "flagship.enableFinalizer" $) }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
   {{- end }}
