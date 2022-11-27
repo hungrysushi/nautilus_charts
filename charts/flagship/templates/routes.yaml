@@ -10,7 +10,7 @@ metadata:
     argocd.argoproj.io/sync-wave: {{ $.Values.networking.syncWave | quote }}
 spec:
   gateways:
-  - istio-system/{{ $gateway.name }}
+  - {{ $gateway.namespace }}/{{ $gateway.name }}
   hosts: {{- toYaml $route.hosts | nindent 4 }}
   {{- with $route.http }}
   http: {{ toYaml . | nindent 4}}

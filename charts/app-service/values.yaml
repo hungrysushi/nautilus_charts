@@ -36,6 +36,9 @@ istio:
   enabled: true
   hostname: ""
   baseHostname: test.nautilus.com
+  gateway:
+    namespace: istio-ingress
+    name: nautilus-gateway
 
 resources:
   limits:

@@ -5,7 +5,7 @@ metadata:
   namespace: {{ .Release.Namespace }}
 spec:
   gateways:
-  - istio-system/nautilus-gateway
+  - {{ .Values.istio.gateway.namespace }}/{{ .Values.istio.gateway.name }}
   hosts:
 {{- if .Values.istio.hostname }}
   - {{ .Values.istio.hostname }}
