@@ -5,7 +5,7 @@ apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
 metadata:
   name: {{ $gateway.name }}
-  namespace: istio-system
+  namespace: {{ $gateway.namespace }}
   annotations:
     argocd.argoproj.io/sync-wave: {{ $.Values.networking.syncWave | quote }}
 spec:
