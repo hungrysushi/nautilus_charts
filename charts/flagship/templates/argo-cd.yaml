@@ -19,8 +19,6 @@ spec:
       valueFiles:
         - values.yaml
       values: |
-        global:
-        {{- toYaml .Values.global | nindent 10 }}
 {{- with .Values.argocd.values }}
         {{- toYaml . | nindent 8 }}
 {{- end }}
