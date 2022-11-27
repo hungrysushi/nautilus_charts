@@ -17,7 +17,7 @@ spec:
     repoURL: {{ .Values.argocd.repoURL }}
     targetRevision: {{ .Values.argocd.targetRevision }}
     helm:
-      releaseName: argo-cd
+      releaseName: argocd
       valueFiles:
         - values.yaml
       values: |
