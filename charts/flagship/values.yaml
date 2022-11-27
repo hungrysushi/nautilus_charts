@@ -30,7 +30,7 @@ istio:
   enabled: true
   syncWave: -1
   repoURL: 'https://istio-release.storage.googleapis.com/charts'
-  targetRevision: '1.16.*'
+  targetRevision: '1.16.0'
   base:
     namespace: istio-system
     values: {}
@@ -41,6 +41,13 @@ istio:
 # - name: ingressgateway
 #   namespace: istio-ingress
 #   values: {}
+  nodeGateway:
+    # special gateway for cheap ingress through host ports. Not for production use
+    namespace: istio-ingress
+    chart: charts/gateway
+    repoURL: git@github.com:hungrysushi/nautilus_charts.git
+    targetRevision: ""
+    values: {}
 
 networking:
   enabled: true
