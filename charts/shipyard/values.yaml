@@ -11,6 +11,7 @@ project: ""
 
 flagship:
   enabled: true
+  syncWave: 0
   repoURL: git@github.com:hungrysushi/nautilus_charts.git
   path: charts/flagship
   targetRevision: ""
@@ -19,6 +20,7 @@ flagship:
 
 fleet:
   enabled: true
+  syncWave: 1
   repoURL: git@github.com:hungrysushi/nautilus_charts.git
   path: charts/fleet
   targetRevision: ""
@@ -27,6 +29,7 @@ fleet:
 
 flotilla:
   enabled: false
+  syncWave: 2
   repoURL: git@github.com:hungrysushi/nautilus_charts.git
   path: charts/flotilla
   targetRevision: ""

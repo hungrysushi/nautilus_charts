@@ -4,6 +4,8 @@ kind: Application
 metadata:
   name: {{ .Release.Name }}-fleet
   namespace: {{ include "shipyard.namespace" . }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.fleet.syncWave | quote }}
 spec:
   project: {{ .Values.project | default .Values.global.project | default "default" }}
   source:
