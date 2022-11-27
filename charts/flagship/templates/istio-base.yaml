@@ -4,8 +4,10 @@ kind: Application
 metadata:
   name: {{ .Release.Name }}-istio-base
   namespace: {{ include "flagship.namespace" . }}
+  {{- if (include "flagship.enableFinalizer" .) }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  {{- end }}
   annotations:
     argocd.argoproj.io/sync-wave: {{ .Values.istio.syncWave | quote }}
 spec:
@@ -15,7 +17,7 @@ spec:
     repoURL: {{ .Values.istio.repoURL }}
     targetRevision: {{ .Values.istio.targetRevision }}
     helm:
-      releaseName: {{ .Release.Name }}-istio-base
+      releaseName: istio-base
       valueFiles:
         - values.yaml
       values: |

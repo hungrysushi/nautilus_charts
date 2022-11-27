@@ -67,3 +67,16 @@ Namespace to create ArgoCD apps
 {{- define "flagship.namespace" -}}
 {{- .Values.namespace | default .Values.global.argocd.namespace -}}
 {{- end }}
+
+{{/*
+Enable finalizer
+*/}}
+{{- define "flagship.enableFinalizer" -}}
+{{- if (and (haskey .Values "enableFinalizer") .Values.enableFinializer -}}
+  true
+{{- else -}}
+  {{- if .Values.global.enableFinalizer -}}
+    true
+  {{- end -}}
+{{- end -}}
+{{- end }}

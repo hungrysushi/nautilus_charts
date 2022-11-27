@@ -4,8 +4,10 @@ kind: Application
 metadata:
   name: {{ .Release.Name }}-istio-istiod
   namespace: {{ include "flagship.namespace" . }}
+  {{- if (include "flagship.enableFinalizer" .) }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  {{- end }}
   annotations:
     argocd.argoproj.io/sync-wave: {{ .Values.istio.syncWave | quote }}
 spec:

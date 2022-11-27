@@ -1,6 +1,7 @@
 global:
   project: ""
   argocd:
+    enableFinalizer: false
     namespace: argocd
     targetRevision: main
     syncPolicy: {}
@@ -8,6 +9,8 @@ global:
 namespace: ""
 
 project: ""
+
+enableFinalizer: ""
 
 flagship:
   enabled: true

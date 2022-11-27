@@ -75,4 +75,15 @@ Destination namespace for chart
 {{- .ship.namespace | default (printf "%s-fleet-ship-%s" .root.Release.Name .ship.name) }}
 {{- end }}
 
-
+{{/*
+Enable finalizer
+*/}}
+{{- define "shipyard.enableFinalizer" -}}
+{{- if (and (haskey .Values "enableFinalizer") .Values.enableFinializer -}}
+  true
+{{- else -}}
+  {{- if .Values.global.enableFinalizer -}}
+    true
+  {{- end -}}
+{{- end -}}
+{{- end }}

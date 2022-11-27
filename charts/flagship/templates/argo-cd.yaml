@@ -4,8 +4,10 @@ kind: Application
 metadata:
   name: {{ .Release.Name }}-argo-cd
   namespace: {{ include "flagship.namespace" . }}
+  {{- if (include "flagship.enableFinalizer" .) }}
   finalizers:
     - resources-finalizer.argocd.argoproj.io
+  {{- end }}
   annotations:
     argocd.argoproj.io/sync-wave: {{ .Values.argocd.syncWave | quote }}
 spec:
@@ -15,7 +17,7 @@ spec:
     repoURL: {{ .Values.argocd.repoURL }}
     targetRevision: {{ .Values.argocd.targetRevision }}
     helm:
-      releaseName: {{ .Release.Name }}-argo-cd
+      releaseName: argo-cd
       valueFiles:
         - values.yaml
       values: |
