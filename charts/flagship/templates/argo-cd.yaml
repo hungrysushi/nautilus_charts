@@ -20,8 +20,8 @@ spec:
       releaseName: argocd
       valueFiles:
         - values.yaml
-      values: |
 {{- with .Values.argocd.values }}
+      values: |
         {{- toYaml . | nindent 8 }}
 {{- end }}
   destination:

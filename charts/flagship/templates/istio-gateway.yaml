@@ -21,8 +21,8 @@ spec:
       releaseName: istio-gateway-{{ $gateway.name }}
       valueFiles:
         - values.yaml
-      values: |
 {{- with $gateway.values }}
+      values: |
         {{- toYaml . | nindent 8 }}
 {{- end }}
   destination:

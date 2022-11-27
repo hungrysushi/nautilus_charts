@@ -20,8 +20,8 @@ spec:
       releaseName: istio-base
       valueFiles:
         - values.yaml
-      values: |
 {{- with .Values.istio.base.values }}
+      values: |
         {{- toYaml . | nindent 8 }}
 {{- end }}
   destination:
