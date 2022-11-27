@@ -1,31 +1,32 @@
 {{- if .Values.fleet.enabled }}
+{{- range .Values.fleet.ships }}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: {{ .Release.Name }}-fleet
-  namespace: {{ include "shipyard.namespace" . }}
+  name: {{ $.Release.Name }}-fleet-ship-{{ .name }}
+  namespace: {{ include "shipyard.namespace" $ }}
   annotations:
-    argocd.argoproj.io/sync-wave: {{ .Values.fleet.syncWave | quote }}
+    argocd.argoproj.io/sync-wave: {{ $.Values.fleet.defaults.syncWave | quote }}
 spec:
-  project: {{ .Values.project | default .Values.global.project | default "default" }}
+  project: {{ $.Values.project | default $.Values.global.project | default "default" }}
   source:
-    repoURL: {{ .Values.fleet.repoURL }}
-    path: {{ .Values.fleet.path }}
-    targetRevision: {{ .Values.fleet.targetRevision | default .Values.global.argocd.targetRevision }}
+    repoURL: {{ .repoURL | default $.Values.fleet.defaults.repoURL }}
+    path: {{ .path | default $.Values.fleet.defaults.path }}
+    targetRevision: {{ .targetRevision | default $.Values.fleet.defaults.targetRevision | default $.Values.global.argocd.targetRevision }}
     helm:
-      releaseName: {{ .Release.Name }}-fleet
+      releaseName: {{ $.Release.Name }}-fleet-ship-{{ .name }}
       valueFiles:
         - values.yaml
       values: |
-        global: {{ toYaml .Values.global | nindent 10 }}
-      {{- with .Values.fleet.values }}
+      {{- with .values }}
         {{ toYaml . | nindent 8 }}
       {{- end }}
   destination:
-    namespace: {{ include "shipyard.namespace" . }}
+    namespace: {{ include "shipyard.fleet.destinationNamespace" (dict "root" $ "ship" .) }}
     server: 'https://kubernetes.default.svc'
   syncPolicy:
-  {{- with .Values.fleet.syncPolicy | default .Values.global.argocd.syncPolicy }}
+  {{- with .syncPolicy | default $.Values.fleet.defaults.syncPolicy | default $.Values.global.argocd.syncPolicy }}
     {{ toYaml . | nindent 4}}
   {{- end }}
+{{- end }}
 {{- end }}

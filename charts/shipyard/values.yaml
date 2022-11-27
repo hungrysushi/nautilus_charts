@@ -20,16 +20,24 @@ flagship:
 
 fleet:
   enabled: true
-  syncWave: 1
-  repoURL: git@github.com:hungrysushi/nautilus_charts.git
-  path: charts/fleet
-  targetRevision: ""
-  syncPolicy: {}
-  values: {}
+  defaults:
+    syncWave: 1
+    repoURL: git@github.com:hungrysushi/nautilus_charts.git
+    path: charts/app-service
+    targetRevision: ""
+    syncPolicy: {}
+  ships: []
+#   name: ""
+#   namespace: ""
+#   repoURL: ""
+#   path: ""
+#   targetRevision: ""
+#   syncPolicy: {}
+#   values: {}
 
 flotilla:
   enabled: false
-  syncWave: 2
+  syncWave: 1
   repoURL: git@github.com:hungrysushi/nautilus_charts.git
   path: charts/flotilla
   targetRevision: ""

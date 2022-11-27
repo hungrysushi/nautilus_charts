@@ -68,4 +68,11 @@ Namespace to install ArgoCD apps
 {{- .Values.namespace | default .Values.global.argocd.namespace }}
 {{- end }}
 
+{{/*
+Destination namespace for chart
+*/}}
+{{- define "shipyard.fleet.destinationNamespace" -}}
+{{- .ship.namespace | default (printf "%s-fleet-ship-%s" .root.Release.Name .ship.name) }}
+{{- end }}
+
 
