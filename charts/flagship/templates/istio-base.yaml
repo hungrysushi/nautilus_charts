@@ -24,6 +24,11 @@ spec:
       values: |
         {{- toYaml . | nindent 8 }}
 {{- end }}
+  ignoreDifferences:
+  - group: admissionregistration.k8s.io
+    kind: ValidatingWebhookConfiguration
+    jsonPointers:
+    - /webhooks/0/failurePolicy
   destination:
     namespace: {{ .Values.istio.base.namespace }}
     server: 'https://kubernetes.default.svc'
