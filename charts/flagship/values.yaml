@@ -52,3 +52,12 @@ istio:
 networking:
   enabled: true
   syncWave: 0
+
+certManager:
+  enabled: true
+  syncWave: 0
+  repoURL: https://charts.jetstack.io
+  targetRevision: v1.10.1
+  namespace: cert-manager
+  values:
+    installCRDs: true
