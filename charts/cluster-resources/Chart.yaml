@@ -1,0 +1,7 @@
+apiVersion: v2
+name: cluster-resources
+description: Cluster-level resources
+
+type: application
+
+version: 1.0.0

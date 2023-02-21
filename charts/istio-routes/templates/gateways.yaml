@@ -1,0 +1,34 @@
+{{- range $name, $config := .Values.gateways }}
+{{- if (and $config.create $config.hosts) }}
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: {{ $name }}
+  namespace: {{ $config.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $.Values.syncWave.gateway | quote }}
+spec:
+  selector:
+    istio: {{ $config.selector }}
+  servers:
+    - port:
+        name: http-{{ $name }}
+        number: 80
+        protocol: HTTP
+      hosts: {{ toYaml $config.hosts | nindent 8 }}
+      tls:
+        httpsRedirect: true
+    - port:
+        name: https-{{ $name }}
+        number: 443
+        protocol: HTTPS
+      hosts: {{ toYaml $config.hosts | nindent 8 }}
+      tls:
+        mode: 'SIMPLE'
+        credentialName: {{ $config.httpsCertSecret }}
+  {{- with $config.servers }}
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
+{{- end }}

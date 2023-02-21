@@ -1,0 +1,43 @@
+{{- if .Values.argocd.enabled }}
+{{- $controllerAffinity := (dict "controller" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $dexAffinity := (dict "dex" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $redisAffinity := (dict "redis" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $serverAffinity := (dict "server" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $repoServerAffinity := (dict "repoServer" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $applicationSetAffinity := (dict "applicationSet" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $notificationAffinity := (dict "notifications" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $serverUrl := (dict "server" (dict "config" (dict "url" (printf "http://%s" (include "flagship.argoCdUrl" .))))) -}}
+{{- $argoValues := merge $.Values.argocd.values $controllerAffinity $dexAffinity $redisAffinity $serverAffinity $repoServerAffinity $applicationSetAffinity $notificationAffinity $serverUrl -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-argo-cd
+  namespace: argocd
+  {{- if (include "flagship.enableFinalizer" .) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.argocd.syncWave | quote }}
+spec:
+  project: {{ .Release.Name }}  # nautilus-flagship
+  source:
+    chart: {{ .Values.argocd.chart }}
+    repoURL: {{ .Values.argocd.repoURL }}
+    targetRevision: {{ .Values.argocd.targetRevision }}
+    helm:
+      releaseName: argocd
+      valueFiles:
+        - values.yaml
+{{- with $argoValues }}
+      values: |
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+  destination:
+    namespace: argocd
+    name: {{ .Values.global.targetCluster }}
+  syncPolicy:
+  {{- with .Values.argocd.syncPolicy | default .Values.global.config.syncPolicy }}
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

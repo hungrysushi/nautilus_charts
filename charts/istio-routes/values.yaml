@@ -1,0 +1,44 @@
+global:
+  platform: ""  # possible values: eks, gke, aks, unmanaged
+
+  # these nodeSelectors will be used for all services in the specified section
+  nodeSelector:
+    flagship: {}
+    fleet: {}
+
+  # these affinities will be used for all services in the specified section
+  affinity:
+    flagship: {}
+    fleet: {}
+
+  # these settings apply to all components, unless specifically overridden
+  config:
+    targetRevision: main  # which version/release of the platform to use
+
+    #############
+    ## advanced
+    enableFinalizer: false  # enables cascading deletion for resources
+    syncPolicy:
+      # to disable, set to null
+      automated:
+        prune: true
+        selfHeal: true
+
+  baseHostname: ""
+
+syncWave:
+  gateway: 0
+  virtualService: 1
+
+# Specify routes manually here
+# These are grouped by the Gateway resource that each virtual service
+# should attach to
+gateways:
+  ingressgateway:
+    create: true
+    namespace: istio-ingress
+    selector: gateway-ingressgateway
+    hosts: []
+    httpsCertSecret: ""  # required
+    servers: {}  # explicitly pass in server config
+    routes: {}

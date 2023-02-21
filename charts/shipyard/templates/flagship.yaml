@@ -1,0 +1,75 @@
+{{- if .Values.flagship.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ .Release.Name }}-flagship
+  namespace: argocd
+  {{- if (include "shipyard.flagshipFinalizer" .) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ (sub .Values.flagship.appConfig.syncWave 1) | quote }}
+spec:
+  sourceRepos:
+  - '*'
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  destinations:
+  - namespace: '*'
+    server: '*'
+  namespaceResourceBlacklist: []
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  # Enables namespace orphaned resource monitoring.
+  orphanedResources:
+    warn: true
+---
+{{- $fleetHosts := fromYaml (include "fleet.gatewayHosts" $) }}
+{{- $gateways := dict }}
+{{- if and $.Values.flagship.istio $.Values.flagship.istio.routes $.Values.flagship.istio.routes.gateways }}
+{{- $gateways = $.Values.flagship.istio.routes.gateways }}
+{{- end }}
+{{- range $gatewayName, $hosts := $fleetHosts }}
+{{- $gatewayConfig := get $gateways $gatewayName }}
+{{- $_ := set $gatewayConfig "hosts" $hosts }}
+{{- $_ := set $gateways $gatewayName $gatewayConfig }}
+{{- end }}
+{{- $fleetValues := dict "istio" (dict "routes" (dict "gateways" $gateways)) }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-flagship
+  namespace: argocd
+  {{- if (include "shipyard.flagshipFinalizer" .) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.flagship.appConfig.syncWave | quote }}
+spec:
+  project: {{ .Release.Name }}-flagship
+  source:
+    repoURL: {{ .Values.flagship.appConfig.repoURL }}
+    path: {{ .Values.flagship.appConfig.path }}
+    targetRevision: {{ .Values.flagship.appConfig.targetRevision | default .Values.global.config.targetRevision }}
+    helm:
+      releaseName: {{ .Release.Name }}-flagship
+      valueFiles:
+        - values.yaml
+      values: |
+        # propagate globals, since these aren't true Helm subcharts
+        global: {{ toYaml .Values.global | nindent 10 }}
+      {{- with .Values.flagship }}
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+  destination:
+    namespace: argocd
+    server: 'https://kubernetes.default.svc'
+  syncPolicy:
+  {{- with .Values.flagship.appConfig.syncPolicy | default .Values.global.config.syncPolicy }}
+    {{ toYaml . | nindent 4}}
+  {{- end }}
+{{- end }}

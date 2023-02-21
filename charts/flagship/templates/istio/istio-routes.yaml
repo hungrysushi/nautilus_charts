@@ -1,0 +1,47 @@
+{{- if (and .Values.istio.enabled .Values.istio.routes) }}
+{{- $platformRoutes := dict }}
+{{- range $routeName, $routeConfig := .Values.istio.routes.platform.routes }}
+{{- $route := dict }}
+{{- $_ := set $route "hosts" (list (tpl $routeConfig.host $)) }}
+{{- $_ := set $route "namespace" $routeConfig.namespace }}
+{{- $_ := set $route "http" $routeConfig.http }}
+{{- $_ := set $route "tls" $routeConfig.tls }}
+{{- $_ := set $platformRoutes $routeName $route }}
+{{- end }}
+{{- $mergedValues := merge .Values.istio.routes.gateways (dict .Values.istio.routes.platform.gateway (dict "routes" $platformRoutes)) }}
+{{- $fullValues := dict "gateways" $mergedValues }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $.Release.Name }}-istio-routes
+  namespace: argocd
+  {{- if (include "flagship.enableFinalizer" .) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.istio.routes.syncWave | quote }}
+spec:
+  project: {{ .Release.Name }}
+  source:
+    path: {{ .Values.istio.routes.chart }}
+    repoURL: {{ .Values.istio.routes.repoURL}}
+    targetRevision: {{ .Values.istio.routes.targetRevision | default .Values.global.config.targetRevision }}
+    helm:
+      releaseName: istio-routes
+      valueFiles:
+        - values.yaml
+      values: |
+        # propagate globals, since these aren't true Helm subcharts
+        global: {{ toYaml .Values.global | nindent 10 }}
+      {{- with $fullValues }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  destination:
+    namespace: {{ .Values.istio.routes.namespace }}
+    name: {{ .Values.global.targetCluster }}
+  syncPolicy:
+  {{- with .Values.istio.syncPolicy | default .Values.global.config.syncPolicy }}
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

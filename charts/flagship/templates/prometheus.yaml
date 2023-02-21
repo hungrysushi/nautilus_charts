@@ -1,0 +1,39 @@
+{{- if .Values.prometheus.enabled }}
+{{- $serverAffinity := (dict "server" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $alertManagerAffinity := (dict "alertmanager" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $kubeStateAffinity := (dict "kube-state-metrics" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $pushGatewayAffinity := (dict "prometheus-pushgateway" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $promValues := merge $.Values.prometheus.values $serverAffinity $alertManagerAffinity $kubeStateAffinity $pushGatewayAffinity -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-prometheus
+  namespace: argocd
+  {{- if (include "flagship.enableFinalizer" .) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.prometheus.syncWave | quote }}
+spec:
+  project: {{ .Release.Name }}
+  source:
+    chart: prometheus
+    repoURL: {{ .Values.prometheus.repoURL }}
+    targetRevision: {{ .Values.prometheus.targetRevision }}
+    helm:
+      releaseName: prometheus
+      valueFiles:
+        - values.yaml
+{{- with $promValues }}
+      values: |
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+  destination:
+    namespace: {{ .Values.prometheus.namespace }}
+    name: {{ .Values.global.targetCluster }}
+  syncPolicy:
+  {{- with .Values.prometheus.syncPolicy | default .Values.global.config.syncPolicy }}
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

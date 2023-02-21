@@ -1,0 +1,102 @@
+nameOverride: ""
+fullnameOverride: ""
+
+rollout:
+  enabled: true
+  strategy: "canary"
+  canary:
+    analysis: {}
+    trafficRouting: {}
+    steps: []
+
+revisionHistoryLimit: 5
+replicaCount: 1
+
+image:
+  repository: ""
+  pullPolicy: Always
+  tag: ""
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 2000
+
+securityContext:
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  capabilities:
+    drop:
+    - ALL
+
+service:
+  type: ClusterIP
+  port: 80
+
+istio:
+  enabled: true
+  hostname: ""
+  baseHostname: ""
+  gateway:
+    namespace: istio-ingress
+    name: ""
+
+resources:
+  limits:
+    cpu: 100m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: true
+  keda:
+    enabled: true
+    pollingInterval: 30
+    cooldownPeriod: 300
+    cron:
+      enabled: false
+      timezone: America/New_York
+      start: 0 8 * * *
+      end: 0 17 * * *
+      desiredReplicas: 10
+    istioRequestRate:
+      enabled: true
+      server: http://prometheus-server.prometheus.svc.cluster.local
+      metricName: istio_request_rate
+      query: "sum(rate(istio_requests_total{destination_canonical_service=\"{{ include \"app-service.fullname\" . }}\"}[{{ .Values.autoscaling.keda.istioRequestRate.range }}]))"
+      range: 5m
+      threshold: 100
+      activationThreshold: 1
+    additionalTriggers: []
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
+
+startupProbe: {}
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: http
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: http

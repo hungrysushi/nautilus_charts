@@ -1,0 +1,26 @@
+flagship:
+  enabled: true
+
+  sealedSecrets:
+    enabled: true
+  argocd:
+    enabled: true
+    values:
+      crds:
+        install: false
+  argoRollouts:
+    enabled: true
+  istio:
+    enabled: true
+  certManager:
+    enabled: true
+  prometheus:
+    enabled: true
+  keda:
+    enabled: true
+
+fleet:
+  enabled: true
+
+flotilla:
+  enabled: true

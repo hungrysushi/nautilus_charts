@@ -1,0 +1,21 @@
+{{- range $gatewayName, $gatewayConfig := .Values.gateways }}
+{{- range $routeName, $routeConfig := $gatewayConfig.routes }}
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: {{ $routeName }}
+  namespace: {{ $routeConfig.namespace }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $.Values.syncWave.virtualService | quote }}
+spec:
+  gateways:
+  - {{ $gatewayConfig.namespace }}/{{ $gatewayName }}
+  hosts: {{- toYaml $routeConfig.hosts | nindent 4 }}
+  {{- with $routeConfig.http }}
+  http: {{ toYaml . | nindent 4}}
+  {{- end }}
+  {{- with $routeConfig.tls }}
+  tls: {{ toYaml . | nindent 4}}
+  {{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,83 @@
+{{- if .Values.fleet.enabled }}
+{{- range $k, $v := .Values.fleet.services }}
+{{- /* default enabled, only disable if the key was defined and it is false */}}
+{{- if or (not (hasKey $v "enabled")) $v.enabled }}
+{{- $appConfig := ($v.appConfig | default dict) }}
+{{- $appConfig = merge $appConfig $.Values.fleet.appConfig }}
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ $.Release.Name }}-{{ $k }}
+  labels:
+    istio-injection: enabled
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ (sub $appConfig.syncWave 1) | quote }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ $.Release.Name }}-{{ $k }}
+  namespace: argocd
+  {{- if (include "shipyard.fleetServiceFinalizer" (dict "appConfig" $appConfig "global" $.Values.global)) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ (sub $appConfig.syncWave 1) | quote }}
+spec:
+  sourceRepos:
+  - '*'
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  destinations:
+  - namespace: '*'
+    server: '*'
+  namespaceResourceBlacklist: []
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  # Enables namespace orphaned resource monitoring.
+  orphanedResources:
+    warn: true
+---
+{{- $affinity := (dict "affinity" (deepCopy $.Values.global.affinity.fleet)) -}}
+{{- $nodeSelector := (dict "nodeSelector" (deepCopy $.Values.global.nodeSelector.fleet)) -}}
+{{- $istio := (dict "istio" (dict "hostname" (printf "%s.%s" $k ($.Values.fleet.appConfig.baseHostname | default $.Values.global.baseHostname)) "gateway" $.Values.fleet.appConfig.gateway)) }}
+{{- $appValues := merge $v.values $affinity $nodeSelector $istio -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $.Release.Name }}-{{ $k }}
+  namespace: argocd
+  {{- if (include "shipyard.fleetServiceFinalizer" (dict "appConfig" $appConfig "global" $.Values.global)) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $appConfig.syncWave | quote }}
+spec:
+  project: {{ $.Release.Name }}-{{ $k }}
+  source:
+    repoURL: {{ $appConfig.repoURL }}
+    path: {{ $appConfig.path }}
+    targetRevision: {{ $appConfig.targetRevision | default $.Values.global.config.targetRevision }}
+    helm:
+      releaseName: {{ $.Release.Name }}-{{ $k }}
+      valueFiles:
+        - values.yaml
+      values: |
+      {{- with $appValues }}
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+  destination:
+    namespace: {{ $.Release.Name }}-{{ $k }}
+    server: 'https://kubernetes.default.svc'
+  syncPolicy:
+  {{- with $appConfig.syncPolicy | default $.Values.global.config.syncPolicy }}
+    {{ toYaml . | nindent 4}}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,81 @@
+{{- if .Values.autoscaling.enabled }}
+{{- if .Values.autoscaling.keda.enabled }}
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: {{ include "app-service.fullname" . }}
+  labels:
+    {{- include "app-service.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    {{- if .Values.rollout.enabled }}
+    apiVersion: argoproj.io/v1alpha1
+    kind: Rollout
+    {{- else }}
+    apiVersion: apps/v1
+    kind: Deployment
+    {{- end }}
+    name: {{ include "app-service.fullname" . }}
+  pollingInterval: {{ .Values.autoscaling.keda.pollingInterval }}
+  cooldownPeriod: {{ .Values.autoscaling.keda.cooldownPeriod }}
+  minReplicaCount: {{ .Values.autoscaling.minReplicas }}
+  maxReplicaCount: {{ .Values.autoscaling.maxReplicas }}
+  triggers:
+    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: {{ .Values.autoscaling.targetCPUUtilizationPercentage | quote }}
+    {{- end }}
+    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: memory
+      metricType: Utilization
+      metadata:
+        value: {{ .Values.autoscaling.targetMemoryUtilizationPercentage | quote }}
+    {{- end }}
+    {{- if .Values.autoscaling.keda.cron.enabled }}
+    - type: cron
+      metadata:
+        timezone: {{ .Values.autoscaling.keda.cron.timezone | quote }}
+        start: {{ .Values.autoscaling.keda.cron.start | quote }}
+        end: {{ .Values.autoscaling.keda.cron.end | quote }}
+        desiredReplicas: {{ .Values.autoscaling.keda.cron.desiredReplicas | quote }}
+    {{- end }}
+    {{- if .Values.autoscaling.keda.istioRequestRate.enabled }}
+    - type: prometheus
+      metadata:
+        serverAddress: {{ .Values.autoscaling.keda.istioRequestRate.server }}
+        metricName: {{ .Values.autoscaling.keda.istioRequestRate.metricName }}
+        query: {{ tpl .Values.autoscaling.keda.istioRequestRate.query . }}
+        threshold: {{ .Values.autoscaling.keda.istioRequestRate.threshold | quote }}
+        activationThreshold: {{ .Values.autoscaling.keda.istioRequestRate.activationThreshold | quote }}
+    {{- end }}
+{{- else }}
+apiVersion: autoscaling/v2beta1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: {{ include "app-service.fullname" . }}
+  labels:
+    {{- include "app-service.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: {{ include "app-service.fullname" . }}
+  minReplicas: {{ .Values.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.autoscaling.maxReplicas }}
+  metrics:
+    {{- if .Values.autoscaling.targetCPUUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: cpu
+        targetAverageUtilization: {{ .Values.autoscaling.targetCPUUtilizationPercentage }}
+    {{- end }}
+    {{- if .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    - type: Resource
+      resource:
+        name: memory
+        targetAverageUtilization: {{ .Values.autoscaling.targetMemoryUtilizationPercentage }}
+    {{- end }}
+{{- end }}
+{{- end }}

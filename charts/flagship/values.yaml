@@ -1,0 +1,188 @@
+global:
+  platform: ""  # possible values: eks, gke, aks, unmanaged
+  targetCluster: in-cluster
+
+  # these nodeSelectors will be used for all services in the specified section
+  nodeSelector:
+    flagship: {}
+    fleet: {}
+
+  # these affinities will be used for all services in the specified section
+  affinity:
+    flagship: {}
+    fleet: {}
+
+  # these settings apply to all components, unless specifically overridden
+  config:
+    targetRevision: main  # which version/release of the platform to use
+
+    #############
+    ## advanced
+    enableFinalizer: false  # enables cascading deletion for resources
+    syncPolicy:
+      # to disable, set to null
+      automated:
+        prune: true
+        selfHeal: true
+
+  baseHostname: ""
+
+clusterResources:
+  chart: charts/cluster-resources
+  repoURL: git@github.com:hungrysushi/nautilus_charts.git
+  targetRevision: ""
+  syncWave: -100
+  values:
+    namespaces:
+      argocd: {}
+      argo-rollouts: {}
+      istio-operator: {}
+      istio-system: {}
+      istio-ingress:
+        labels:
+          istio-injection: enabled
+      sealed-secrets: {}
+      cert-manager: {}
+      tekton: {}
+      keda: {}
+      prometheus: {}
+
+sealedSecrets:
+  enabled: true
+  repoURL: 'https://bitnami-labs.github.io/sealed-secrets'
+  chart: sealed-secrets
+  targetRevision: 2.7.5
+  syncWave: -50
+  syncPolicy: {}
+  values: {}
+  secrets:
+    syncWave: -45
+    repoURL: ''
+    path: ''
+    targetRevision: HEAD
+    syncPolicy: {}
+
+argocd:
+  enabled: true
+  repoURL: 'https://argoproj.github.io/argo-helm'
+  chart: argo-cd
+  targetRevision: 5.*
+  syncWave: -20
+  syncPolicy: {}
+  values:
+    server:
+      extraArgs:
+      - --insecure
+    applicationSet:
+      enabled: false
+    notifications:
+      enabled: false
+    crds:
+      install: true
+
+argoRollouts:
+  enabled: true
+  repoURL: 'https://argoproj.github.io/argo-helm'
+  chart: argo-rollouts
+  targetRevision: "2.22.*"
+  syncWave: -20
+  syncPolicy: {}
+  values: {}
+
+istio:
+  enabled: true
+  syncWave: -10
+  repoURL: 'https://istio-release.storage.googleapis.com/charts'
+  targetRevision: '1.16.0'
+  syncPolicy: {}
+  base:
+    namespace: istio-system
+    values: {}
+  istiod:
+    namespace: istio-system
+    values: {}
+  gateways:
+    ingressgateway:
+      namespace: istio-ingress
+      values: {}
+  nodeGateway:
+    # special gateway for cheap ingress through host ports. Not for production use
+    # the selector for this is 'nodegateway'
+    enabled: false
+    namespace: istio-ingress
+    chart: charts/gateway
+    repoURL: git@github.com:hungrysushi/nautilus_charts.git
+    targetRevision: ""
+    values: {}
+  routes:
+    enabled: true
+    syncWave: 0
+    namespace: istio-ingress
+    repoURL: git@github.com:hungrysushi/nautilus_charts.git
+    chart: charts/istio-routes
+    targetRevision: ""
+
+    # routes for platform services
+    platform:
+      gateway: ingressgateway  # this must match an existing gateway configured below
+      routes:
+        argocd:
+          host: "argocd.{{ .Values.global.baseHostname }}"
+          namespace: argocd
+          http:
+          - name: argocd-vs
+            match:
+            - port: 80
+            - port: 443
+            route:
+            - destination:
+                host: argocd-server.argocd.svc.cluster.local
+                port:
+                  number: 80
+
+    # Specify routes manually here
+    # These are grouped by the Gateway resource that each virtual service
+    # should attach to
+    gateways:
+      ingressgateway:
+        create: true
+        namespace: istio-ingress
+        selector: gateway-ingressgateway
+        hosts: []
+        httpsCertSecret: ""  # required
+        servers: {}  # explicitly pass in server config
+        # virtualservices will be created for the following routes
+        routes: {}
+
+certManager:
+  enabled: true
+  namespace: cert-manager
+  syncWave: 0
+  repoURL: https://charts.jetstack.io
+  targetRevision: v1.10.1
+  syncPolicy: {}
+  values:
+    installCRDs: true
+
+prometheus:
+  enabled: true
+  namespace: prometheus
+  syncWave: 0
+  repoURL: https://prometheus-community.github.io/helm-charts
+  targetRevision: "19.6.1"
+  syncPolicy: {}
+  values: {}
+
+keda:
+  enabled: true
+  namespace: keda
+  syncWave: 0
+  repoURL: https://kedacore.github.io/charts
+  targetRevision: "2.9.4"
+  syncPolicy: {}
+  values: {}
+
+# TODO
+tekton:
+  enabled: false
+

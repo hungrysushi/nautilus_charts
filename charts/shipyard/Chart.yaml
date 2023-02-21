@@ -1,0 +1,7 @@
+apiVersion: v2
+name: shipyard
+description: This chart is the launching point for the Nautilus platform
+
+type: application
+
+version: 3.0.0

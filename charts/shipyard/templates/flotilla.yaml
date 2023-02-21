@@ -1,0 +1,86 @@
+{{- if .Values.flotilla.enabled }}
+{{- range $k, $v := .Values.flotilla.clusters }}
+{{- /* default enabled, only disable if the key was defined and it is false */}}
+{{- if or (not (hasKey $v "enabled")) $v.enabled }}
+{{- $appConfig := ($v.appConfig | default dict) }}
+{{- $appConfig = merge $appConfig $.Values.flotilla.appConfig }}
+---
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: {{ $k }}
+  namespace: argocd
+  {{- if (include "shipyard.flotillaServiceFinalizer" (dict "appConfig" $appConfig "global" $.Values.global)) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ (sub $appConfig.syncWave 1) | quote }}
+spec:
+  sourceRepos:
+  - '*'
+  clusterResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  destinations:
+  - namespace: '*'
+    server: '*'
+  namespaceResourceBlacklist: []
+  namespaceResourceWhitelist:
+  - group: '*'
+    kind: '*'
+  # Enables namespace orphaned resource monitoring.
+  orphanedResources:
+    warn: true
+---
+{{- /* this is confusing... TODO make it cleaner */}}
+{{- $clusterSettings := dict "global" (dict) -}}
+{{- if or (eq $v.values.global.mode "full") (eq $v.values.global.mode "managed") }}
+    {{- /* for full and managed installs, the apps remain on this cluster, but are deployed to the remote */}}
+    {{- $_ := set $clusterSettings.global "targetCluster" $v.appConfig.targetCluster }}
+{{- else }}
+    {{- /* for self-managed, we keep the app-of-apps, but component apps are deployed to the remote */}}
+    {{- $_ := set $clusterSettings.global "targetCluster" "in-cluster" }}
+{{- end }}
+{{- $clusterValues := merge $v.values $clusterSettings -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ $k }}
+  namespace: argocd
+  {{- if (include "shipyard.flotillaServiceFinalizer" (dict "appConfig" $appConfig "global" $.Values.global)) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ $appConfig.syncWave | quote }}
+spec:
+  project: {{ $k }}
+  source:
+    repoURL: {{ $appConfig.repoURL }}
+    path: {{ $appConfig.path }}
+    targetRevision: {{ $appConfig.targetRevision | default $.Values.global.config.targetRevision }}
+    helm:
+      releaseName: {{ $k }}
+      valueFiles:
+        - values.yaml
+        - modes/{{ $v.values.global.mode }}.values.yaml
+      values: |
+      {{- with $clusterValues }}
+        {{ toYaml . | nindent 8 }}
+      {{- end }}
+  destination:
+    namespace: argocd
+{{- /* inverted logic from the global target cluster flag */}}
+{{- if or (eq $v.values.global.mode "full") (eq $v.values.global.mode "managed") }}
+    name: "in-cluster"
+{{- else }}
+    name: {{ $v.appConfig.targetCluster }}
+{{- end }}
+  syncPolicy:
+  {{- with $appConfig.syncPolicy | default $.Values.global.config.syncPolicy }}
+    {{ toYaml . | nindent 4}}
+  {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,98 @@
+global:
+  platform: ""  # possible values: eks, gke, aks, unmanaged
+  targetCluster: in-cluster
+
+  # these nodeSelectors will be used for all services in the specified section
+  nodeSelector:
+    flagship: {}
+    fleet: {}
+
+  # these affinities will be used for all services in the specified section
+  affinity:
+    flagship: {}
+    fleet: {}
+
+  # these settings apply to all components, unless specifically overridden
+  config:
+    targetRevision: main  # which version/release of the platform to use
+
+    #############
+    ## advanced
+    enableFinalizer: false  # enables cascading deletion for resources
+    syncPolicy:
+      # to disable, set to null
+      automated:
+        prune: true
+        selfHeal: true
+
+  baseHostname: ""
+
+flagship:
+  enabled: true
+  appConfig:
+    syncWave: 0
+    repoURL: git@github.com:hungrysushi/nautilus_charts.git
+    path: charts/flagship
+    targetRevision: ""
+    enableFinalizer: null
+    syncPolicy: {}
+  # all other values passed directly to flagship chart
+
+fleet:
+  enabled: true
+  appConfig:
+    # these are the default app configs for each service
+    syncWave: 100
+    repoURL: git@github.com:hungrysushi/nautilus_charts.git
+    path: charts/app-service
+    targetRevision: ""
+    enableFinalizer: null
+    syncPolicy: {}
+    # routing settings
+    gateway:
+      name: ingressgateway
+    baseHostName: ""  # default domain for services
+
+  # each service is managed by an app chart
+  services:
+    sampleservice:
+      enabled: false
+      values: {}
+      # advanced, should not be modified in most cases
+      appConfig:
+        syncWave: 110 # this should increased from the fleet sync wave
+        repoURL: ""
+        path: ""
+        targetRevision: ""
+        enableFinalizer: ""
+        syncPolicy: {}
+
+flotilla:
+  enabled: true
+  appConfig:
+    syncWave: 100
+    repoURL: git@github.com:hungrysushi/nautilus_charts.git
+    path: charts/shipyard
+    targetRevision: ""
+    enableFinalizer: null
+    syncPolicy: {}
+
+  # each cluster is configured according to the provided values and mode
+  clusters:
+    samplecluster:
+      enabled: false
+      values:
+        global:
+          # don't set targetCluster here, as it will be automatically set based on mode
+          mode: "managed"
+          platform: "custom"
+          baseHostname: "samplecluster.local"
+      # advanced, should not be modified in most cases
+      appConfig:
+        targetCluster: cluster-name
+        syncWave: 110 # this should increased from the fleet sync wave
+        repoURL: ""
+        path: ""
+        targetRevision: ""
+        enableFinalizer: ""
+        syncPolicy: {}

@@ -1,0 +1,39 @@
+{{- if .Values.istio.enabled }}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-istio-base
+  namespace: argocd
+  {{- if (include "flagship.enableFinalizer" .) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.istio.syncWave | quote }}
+spec:
+  project: {{ .Release.Name }}
+  source:
+    chart: base
+    repoURL: {{ .Values.istio.repoURL }}
+    targetRevision: {{ .Values.istio.targetRevision }}
+    helm:
+      releaseName: istio-base
+      valueFiles:
+        - values.yaml
+{{- with .Values.istio.base.values }}
+      values: |
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+  ignoreDifferences:
+  - group: admissionregistration.k8s.io
+    kind: ValidatingWebhookConfiguration
+    jsonPointers:
+    - /webhooks/0/failurePolicy
+  destination:
+    namespace: {{ .Values.istio.base.namespace }}
+    name: {{ .Values.global.targetCluster }}
+  syncPolicy:
+  {{- with .Values.istio.syncPolicy | default .Values.global.config.syncPolicy }}
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

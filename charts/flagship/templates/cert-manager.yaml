@@ -1,0 +1,38 @@
+{{- if .Values.certManager.enabled }}
+{{- $affinity := (dict "affinity" (deepCopy $.Values.global.affinity.flagship)) -}}
+{{- $webhookAffinity := (dict "webhook" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $cainjectorAffinity := (dict "cainjector" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $certManagerValues := merge $.Values.certManager.values $affinity $webhookAffinity $cainjectorAffinity -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-cert-manager
+  namespace: argocd
+  {{- if (include "flagship.enableFinalizer" .) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.certManager.syncWave | quote }}
+spec:
+  project: {{ .Release.Name }}
+  source:
+    chart: cert-manager
+    repoURL: {{ .Values.certManager.repoURL }}
+    targetRevision: {{ .Values.certManager.targetRevision }}
+    helm:
+      releaseName: cert-manager
+      valueFiles:
+        - values.yaml
+{{- with .Values.certManager.values }}
+      values: |
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+  destination:
+    namespace: {{ .Values.certManager.namespace }}
+    name: {{ .Values.global.targetCluster }}
+  syncPolicy:
+  {{- with .Values.certManager.syncPolicy | default .Values.global.config.syncPolicy }}
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

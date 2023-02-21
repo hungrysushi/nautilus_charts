@@ -1,0 +1,7 @@
+apiVersion: v2
+name: flagship
+description: This chart deploys the core components of the platform
+
+type: application
+
+version: 3.0.0

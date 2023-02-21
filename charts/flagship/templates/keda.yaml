@@ -1,0 +1,36 @@
+{{- if .Values.keda.enabled }}
+{{- $affinity := (dict "affinity" (deepCopy $.Values.global.affinity.flagship)) -}}
+{{- $kedaValues := merge $.Values.keda.values $affinity -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-keda
+  namespace: argocd
+  {{- if (include "flagship.enableFinalizer" .) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.keda.syncWave | quote }}
+spec:
+  project: {{ .Release.Name }}
+  source:
+    chart: keda
+    repoURL: {{ .Values.keda.repoURL }}
+    targetRevision: {{ .Values.keda.targetRevision }}
+    helm:
+      releaseName: keda
+      valueFiles:
+        - values.yaml
+{{- with $kedaValues }}
+      values: |
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+  destination:
+    namespace: {{ .Values.keda.namespace }}
+    name: {{ .Values.global.targetCluster }}
+  syncPolicy:
+  {{- with .Values.keda.syncPolicy | default .Values.global.config.syncPolicy }}
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

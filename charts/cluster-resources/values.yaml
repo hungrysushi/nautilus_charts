@@ -1,0 +1,29 @@
+global:
+  platform: ""  # possible values: eks, gke, aks, unmanaged
+
+  # these nodeSelectors will be used for all services in the specified section
+  nodeSelector:
+    flagship: {}
+    fleet: {}
+
+  # these affinities will be used for all services in the specified section
+  affinity:
+    flagship: {}
+    fleet: {}
+
+  # these settings apply to all components, unless specifically overridden
+  config:
+    targetRevision: main  # which version/release of the platform to use
+
+    #############
+    ## advanced
+    enableFinalizer: false  # enables cascading deletion for resources
+    syncPolicy:
+      # to disable, set to null
+      automated:
+        prune: true
+        selfHeal: true
+
+  baseHostname: ""
+
+namespace: {}

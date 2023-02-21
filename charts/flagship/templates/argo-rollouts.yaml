@@ -1,0 +1,37 @@
+{{- if .Values.argoRollouts.enabled }}
+{{- $controllerAffinity := (dict "controller" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $dashboardAffinity := (dict "dashboard" (dict "affinity" (deepCopy $.Values.global.affinity.flagship))) -}}
+{{- $argoValues := merge $.Values.argoRollouts.values $controllerAffinity $dashboardAffinity -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-argo-rollouts
+  namespace: argocd
+  {{- if (include "flagship.enableFinalizer" .) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.argoRollouts.syncWave | quote }}
+spec:
+  project: {{ .Release.Name }}  # nautilus-flagship
+  source:
+    chart: {{ .Values.argoRollouts.chart }}
+    repoURL: {{ .Values.argoRollouts.repoURL }}
+    targetRevision: {{ .Values.argoRollouts.targetRevision }}
+    helm:
+      releaseName: argo-rollouts
+      valueFiles:
+        - values.yaml
+{{- with $argoValues }}
+      values: |
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+  destination:
+    namespace: argo-rollouts
+    name: {{ .Values.global.targetCluster }}
+  syncPolicy:
+  {{- with .Values.argoRollouts.syncPolicy | default .Values.global.config.syncPolicy }}
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
