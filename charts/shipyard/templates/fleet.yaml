@@ -73,7 +73,7 @@ spec:
       {{- end }}
   destination:
     namespace: {{ $.Release.Name }}-{{ $k }}
-    server: 'https://kubernetes.default.svc'
+    name: {{ $.Values.global.targetCluster }}
   syncPolicy:
   {{- with $appConfig.syncPolicy | default $.Values.global.config.syncPolicy }}
     {{ toYaml . | nindent 4}}
