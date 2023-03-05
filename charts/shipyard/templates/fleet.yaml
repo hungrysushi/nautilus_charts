@@ -42,10 +42,11 @@ spec:
   orphanedResources:
     warn: true
 ---
+{{- $globals := dict "global" (deepCopy $.Values.global) -}}
 {{- $affinity := (dict "affinity" (deepCopy $.Values.global.affinity.fleet)) -}}
 {{- $nodeSelector := (dict "nodeSelector" (deepCopy $.Values.global.nodeSelector.fleet)) -}}
 {{- $istio := (dict "istio" (dict "hostname" (printf "%s.%s" $k ($.Values.fleet.appConfig.baseHostname | default $.Values.global.baseHostname)) "gateway" $.Values.fleet.appConfig.gateway)) }}
-{{- $appValues := merge $v.values $affinity $nodeSelector $istio -}}
+{{- $appValues := merge $v.values $globals $affinity $nodeSelector $istio -}}
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
