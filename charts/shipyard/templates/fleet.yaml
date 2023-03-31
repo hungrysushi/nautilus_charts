@@ -63,7 +63,7 @@ spec:
   source:
     repoURL: {{ $appConfig.repoURL }}
     path: {{ $appConfig.path }}
-    targetRevision: {{ $appConfig.targetRevision | default $.Values.global.config.targetRevision }}
+    targetRevision: {{ $appConfig.targetRevision | default $.Values.global.config.targetRevision | quote }}
     helm:
       releaseName: {{ $.Release.Name }}-{{ $k }}
       valueFiles:
