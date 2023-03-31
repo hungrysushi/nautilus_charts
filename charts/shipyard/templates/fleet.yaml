@@ -61,7 +61,11 @@ spec:
   project: {{ $.Release.Name }}-{{ $k }}
   source:
     repoURL: {{ $appConfig.repoURL }}
+    {{- if $appConfig.chart }}
+    chart: {{ $appConfig.chart }}
+    {{- else }}
     path: {{ $appConfig.path }}
+    {{- end }}
     targetRevision: {{ $appConfig.targetRevision | default $.Values.global.config.targetRevision | quote }}
     helm:
       releaseName: {{ $.Release.Name }}-{{ $k }}
