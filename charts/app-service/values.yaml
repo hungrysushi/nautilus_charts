@@ -100,3 +100,5 @@ readinessProbe:
   httpGet:
     path: /
     port: http
+
+env: []
