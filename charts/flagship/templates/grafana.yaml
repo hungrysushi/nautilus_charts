@@ -1,0 +1,36 @@
+{{- if .Values.grafana.enabled }}
+{{- $affinity := (dict "affinity" (deepCopy $.Values.global.affinity.flagship)) -}}
+{{- $grafanaValues := merge $.Values.grafana.values $affinity -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-grafana
+  namespace: argocd
+  {{- if (include "flagship.enableFinalizer" .) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.grafana.syncWave | quote }}
+spec:
+  project: {{ .Release.Name }}
+  source:
+    chart: grafana
+    repoURL: {{ .Values.grafana.repoURL }}
+    targetRevision: {{ .Values.grafana.targetRevision }}
+    helm:
+      releaseName: grafana
+      valueFiles:
+        - values.yaml
+{{- with $grafanaValues }}
+      values: |
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+  destination:
+    namespace: {{ .Values.grafana.namespace }}
+    name: {{ .Values.global.targetCluster }}
+  syncPolicy:
+  {{- with .Values.grafana.syncPolicy | default .Values.global.config.syncPolicy }}
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}
