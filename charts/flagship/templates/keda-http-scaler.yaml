@@ -1,0 +1,36 @@
+{{- if (and .Values.keda.enabled .Values.kedaHttpScaler.enabled) }}
+{{- $affinity := (dict "affinity" (deepCopy $.Values.global.affinity.flagship)) -}}
+{{- $kedaScalerValues := merge $.Values.kedaHttpScaler.values $affinity -}}
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: {{ .Release.Name }}-keda-http-add-on
+  namespace: argocd
+  {{- if (include "flagship.enableFinalizer" .) }}
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  {{- end }}
+  annotations:
+    argocd.argoproj.io/sync-wave: {{ .Values.kedaHttpScaler.syncWave | quote }}
+spec:
+  project: {{ .Release.Name }}
+  source:
+    chart: keda-add-ons-http
+    repoURL: {{ .Values.kedaHttpScaler.repoURL }}
+    targetRevision: {{ .Values.kedaHttpScaler.targetRevision }}
+    helm:
+      releaseName: keda-http-add-on
+      valueFiles:
+        - values.yaml
+{{- with $kedaScalerValues }}
+      values: |
+        {{- toYaml . | nindent 8 }}
+{{- end }}
+  destination:
+    namespace: {{ .Values.kedaHttpScaler.namespace }}
+    name: {{ .Values.global.targetCluster }}
+  syncPolicy:
+  {{- with .Values.kedaHttpScaler.syncPolicy | default .Values.global.config.syncPolicy }}
+    {{ toYaml . | nindent 4 }}
+  {{- end }}
+{{- end }}

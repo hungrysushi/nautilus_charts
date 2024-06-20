@@ -192,6 +192,15 @@ keda:
   syncPolicy: {}
   values: {}
 
+kedaHttpScaler:
+  enabled: false
+  namespace: keda
+  syncWave: 0
+  repoURL: https://kedacore.github.io/charts
+  targetRevision: "0.8.0"
+  syncPolicy: {}
+  values: {}
+
 # TODO
 tekton:
   enabled: false
