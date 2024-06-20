@@ -188,7 +188,7 @@ keda:
   namespace: keda
   syncWave: 0
   repoURL: https://kedacore.github.io/charts
-  targetRevision: "2.9.4"
+  targetRevision: "2.14.2"
   syncPolicy: {}
   values: {}
 
