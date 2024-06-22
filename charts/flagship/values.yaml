@@ -47,6 +47,7 @@ clusterResources:
       keda: {}
       prometheus: {}
       grafana: {}
+      crossplane-system: {}
 
 sealedSecrets:
   enabled: true
@@ -198,6 +199,15 @@ kedaHttpScaler:
   syncWave: 0
   repoURL: https://kedacore.github.io/charts
   targetRevision: "0.8.0"
+  syncPolicy: {}
+  values: {}
+
+crossplane:
+  enabled: false
+  namespace: crossplane-system
+  syncWave: 0
+  repoURL: https://charts.crossplane.io/stable
+  targetRevision: "1.16.0"
   syncPolicy: {}
   values: {}
 
